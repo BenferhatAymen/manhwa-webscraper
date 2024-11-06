@@ -25,7 +25,7 @@ This project is a web scraper written in Go that collects information about Manh
 ### Installation and Setup
 1. Clone this repository:
    ```bash
-   git clone https://github.com/yourusername/manhwa-scraper.git
+   git clone https://github.com/BenferhatAymen/manhwa-webscraper.git
    ```
 2. Navigate into the project directory:
    ```bash
