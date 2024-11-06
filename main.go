@@ -1,7 +1,7 @@
-package main
+package scraper
 
 import (
-	"fmt"
+	"strings"
 
 	"github.com/gocolly/colly/v2"
 )
@@ -14,62 +14,93 @@ type Manhwa struct {
 }
 
 type Chapter struct {
-	Title  string
-	Link   string
+	Title string
+	Link  string
+}
+
+type ChapterImages struct {
 	Images []string
 }
 
-func main() {
+func GetLatestManwas() ([]Manhwa, error) {
 	c := colly.NewCollector()
 
-	firstLinkVisited := false
-	firstChapterVisited := false
-
-	var chapter Chapter
+	var manhwas []Manhwa
 
 	c.OnHTML("div.info > a", func(e *colly.HTMLElement) {
-		if firstLinkVisited {
-			return
-		}
-		firstLinkVisited = true
 
 		manhwa := Manhwa{
 			Title: e.ChildText("h3"),
 			Link:  e.Request.AbsoluteURL(e.Attr("href")),
 		}
-		fmt.Printf("Manhwa Title: %s\nManhwa Link: %s\n\n", manhwa.Title, manhwa.Link)
 
-		e.Request.Visit(manhwa.Link)
+		manhwas = append(manhwas, manhwa)
 	})
+	c.Visit(BASE_URL)
+
+	return manhwas, nil
+}
+
+func GetChaptersFromManhwa(manhwa Manhwa) ([]Chapter, error) {
+	c := colly.NewCollector()
+
+	var chapters []Chapter
 
 	c.OnHTML("div.ts-chl-collapsible-content li", func(e *colly.HTMLElement) {
-		if firstChapterVisited {
-			return
-		}
-		firstChapterVisited = true
-
-		chapter = Chapter{
+		chapter := Chapter{
 			Title: e.ChildText("div.epl-num"),
 			Link:  e.Request.AbsoluteURL(e.ChildAttr("a", "href")),
 		}
-		fmt.Printf("Chapter Title: %s\nChapter Link: %s\n\n", chapter.Title, chapter.Link)
 
-		e.Request.Visit(chapter.Link)
+		chapters = append(chapters, chapter)
 	})
+	c.Visit(manhwa.Link)
+
+	return chapters, nil
+}
+
+func GetChapterImages(chapter Chapter) (ChapterImages, error) {
+	c := colly.NewCollector()
+
+	var chapterImages ChapterImages
 
 	c.OnHTML("div.page-break.no-gaps", func(e *colly.HTMLElement) {
 		imageSrc := e.ChildAttr("img", "src")
-		chapter.Images = append(chapter.Images, imageSrc)
-		fmt.Printf("Added Image: %s\n", imageSrc)
+		chapterImages.Images = append(chapterImages.Images, imageSrc)
 	})
 
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting:", r.URL.String())
+	c.Visit(chapter.Link)
+
+	return chapterImages, nil
+}
+
+func setQuery(query string) string {
+	query = strings.ReplaceAll(query, " ", "+")
+	return query
+}
+
+func SearchForMahwa(query string) ([]Manhwa, error) {
+	c := colly.NewCollector()
+
+	settedQuery := setQuery(query)
+
+	searchUrl := "https://olympustaff.com/?search=" + settedQuery
+	var manhwas []Manhwa
+
+	c.OnHTML("div.bsx", func(e *colly.HTMLElement) {
+
+		manhwaLink := e.ChildAttr("a", "href")
+		manhwaName := e.ChildAttr("a", "title")
+
+		manhwa := Manhwa{
+			Title: manhwaName,
+			Link:  manhwaLink,
+		}
+		manhwas = append(manhwas, manhwa)
+
 	})
 
-	c.OnScraped(func(r *colly.Response) {
-		fmt.Printf("\nFinal Chapter Data: %+v\n", chapter)
-	})
+	c.Visit(searchUrl)
+	return manhwas, nil
 
-	c.Visit(BASE_URL)
 }
