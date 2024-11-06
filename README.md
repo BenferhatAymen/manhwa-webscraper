@@ -1,7 +1,7 @@
 **Manhwa Scraper in Go**
 
 ### Description
-This project is a web scraper written in Go that collects information about Manhwa (Korean comics) from the website [OlTeamx](https://olympustaff.com/). Using the [Colly](https://github.com/gocolly/colly) package, the scraper extracts data on the latest Manhwa titles, chapters, and images, enabling users to easily access and download specific Manhwa content. The project is modular, with functions for retrieving the latest Manhwa, fetching chapters for a specific title, and gathering all images for a particular chapter.
+This project is a web scraper written in Go that collects information about Manhwa (Korean comics) from the website [Teamx Manhwa](https://olympustaff.com/). Using the [Colly](https://github.com/gocolly/colly) package, the scraper extracts data on the latest Manhwa titles, chapters, and images, enabling users to easily access and download specific Manhwa content. The project is modular, with functions for retrieving the latest Manhwa, fetching chapters for a specific title, and gathering all images for a particular chapter.
 
 ---
 
