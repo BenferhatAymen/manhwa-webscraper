@@ -7,7 +7,7 @@ import (
 )
 
 const BASE_URL = "https://olympustaff.com/"
-
+// manhwa struct
 type Manhwa struct {
 	Title string
 	Link  string
