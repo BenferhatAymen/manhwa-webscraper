@@ -9,6 +9,7 @@ import (
 )
 
 const BASE_URL = "https://olympustaff.com/"
+
 // manhwa struct
 type Manhwa struct {
 	Title string
@@ -24,8 +25,6 @@ type Chapter struct {
 type ChapterImages struct {
 	Images []string
 }
-
-
 
 func GetLatestManwas() ([]Manhwa, error) {
 	c := colly.NewCollector()
@@ -60,10 +59,19 @@ func GetChaptersFromManhwa(manhwa Manhwa) ([]Chapter, error) {
 	var chapters []Chapter
 	var pages []string
 
-	c.OnHTML("ul.pagination li > a.page-link", func(e *colly.HTMLElement) {
+	c.OnHTML("ul.pagination li", func(e *colly.HTMLElement) {
+		link := e.ChildAttr("a", "href")
+		if link != "" {
+			pages = append(pages, e.Request.AbsoluteURL(link))
+		}
+	})
 
-		pages = append(pages, e.Attr("href"))
-
+	c.OnHTML("div.ts-chl-collapsible-content li", func(e *colly.HTMLElement) {
+		chapter := Chapter{
+			Title: e.ChildText("div.epl-num"),
+			Link:  e.Request.AbsoluteURL(e.ChildAttr("a", "href")),
+		}
+		chapters = append(chapters, chapter)
 	})
 
 	c.OnError(func(r *colly.Response, err error) {
@@ -72,11 +80,12 @@ func GetChaptersFromManhwa(manhwa Manhwa) ([]Chapter, error) {
 	err := c.Visit(manhwa.Link)
 	if err != nil {
 		return nil, fmt.Errorf("failed to visit %s: %w", manhwa.Link, err)
-
 	}
+
 	if len(pages) > 0 {
 		pages = pages[:len(pages)-1]
 	}
+
 	chapterCollector := colly.NewCollector()
 
 	chapterCollector.OnHTML("div.ts-chl-collapsible-content li", func(e *colly.HTMLElement) {
@@ -155,18 +164,18 @@ func SearchForMahwa(query string) ([]Manhwa, error) {
 	return manhwas, nil
 }
 
-// func main() {
-// 	manhwas, err := SearchForMahwa("solo")
-// 	if err != nil {
-// 		fmt.Println(err)
-// 		return
-// 	}
-// 	fmt.Println(manhwas[2])
+func main() {
+	manhwas, err := SearchForMahwa("after the end")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(manhwas[1])
 
-// 	chapters , _:= GetChaptersFromManhwa(manhwas[1])
+	chapters, _ := GetChaptersFromManhwa(manhwas[1])
 
-// 	for _, chapter := range chapters {
-// 		fmt.Println(chapter)
-// 	}
+	for _, chapter := range chapters {
+		fmt.Println(chapter)
+	}
 
-// }
+}
